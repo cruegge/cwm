@@ -493,12 +493,6 @@ void			 screen_assert_clients_within(struct screen_ctx *);
 struct geom		 screen_area(struct screen_ctx *, int, int, int);
 struct screen_ctx	*screen_find(Window);
 void			 screen_init(int);
-void			 screen_prop_win_create(struct screen_ctx *, Window);
-void			 screen_prop_win_destroy(struct screen_ctx *);
-void			 screen_prop_win_draw(struct screen_ctx *,
-			     const char *, ...)
-			    __attribute__((__format__ (printf, 2, 3)))
-			    __attribute__((__nonnull__ (2)));
 void			 screen_update_geometry(struct screen_ctx *);
 void			 screen_updatestackingorder(struct screen_ctx *);
 

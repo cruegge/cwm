@@ -170,8 +170,6 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 	    CurrentTime) != GrabSuccess)
 		return;
 
-	screen_prop_win_create(sc, cc->win);
-	screen_prop_win_draw(sc, "%+5d%+5d", cc->geom.x, cc->geom.y);
 	while (move) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
 		switch (ev.type) {
@@ -194,8 +192,6 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 			    cc->geom.y + cc->geom.h + (cc->bwidth * 2),
 			    area.y, area.y + area.h, sc->snapdist);
 			client_move(cc);
-			screen_prop_win_draw(sc,
-			    "%+5d%+5d", cc->geom.x, cc->geom.y);
 			break;
 		case ButtonRelease:
 			move = 0;
@@ -204,7 +200,6 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 	}
 	if (ltime)
 		client_move(cc);
-	screen_prop_win_destroy(sc);
 	XUngrabPointer(X_Dpy, CurrentTime);
 }
 
@@ -243,7 +238,6 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	struct client_ctx	*cc = ctx;
 	XEvent			 ev;
 	Time			 ltime = 0;
-	struct screen_ctx	*sc = cc->sc;
 	int			 resize = 1;
 	int			 zone_x, zone_y;
 	struct geom		 geom;
@@ -266,8 +260,6 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	    CurrentTime) != GrabSuccess)
 		return;
 
-	screen_prop_win_create(sc, cc->win);
-	screen_prop_win_draw(sc, "%4d x %-4d", cc->dim.w, cc->dim.h);
 	while (resize) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
 		switch (ev.type) {
@@ -319,8 +311,6 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 				cc->ptr.y = cc->ptr.y - geom.h + cc->geom.h;
 			}
 			client_resize(cc, 1);
-			screen_prop_win_draw(sc,
-			    "%4d x %-4d", cc->dim.w, cc->dim.h);
 			break;
 		case ButtonRelease:
 			resize = 0;
@@ -329,7 +319,6 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	}
 	if (ltime)
 		client_resize(cc, 1);
-	screen_prop_win_destroy(sc);
 	XUngrabPointer(X_Dpy, CurrentTime);
 
 	/* Make sure the pointer stays within the window. */
