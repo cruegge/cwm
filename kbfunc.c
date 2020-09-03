@@ -245,6 +245,8 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	Time			 ltime = 0;
 	struct screen_ctx	*sc = cc->sc;
 	int			 resize = 1;
+	int			 zone_x, zone_y;
+	struct geom		 geom;
 
 	if (cc->flags & CLIENT_FREEZE)
 		return;
@@ -252,10 +254,15 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	client_raise(cc);
 	client_ptr_save(cc);
 
-	xu_ptr_set(cc->win, cc->geom.w, cc->geom.h);
+	zone_x = (3 * cc->ptr.x) / cc->geom.w;
+	zone_y = (3 * cc->ptr.y) / cc->geom.h;
+
+	if (zone_x == 1 && zone_y == 1) {
+		return kbfunc_client_move_mb(ctx, cargs);
+	}
 
 	if (XGrabPointer(X_Dpy, cc->win, False, MOUSEMASK,
-	    GrabModeAsync, GrabModeAsync, None, Conf.cursor[CF_RESIZE],
+	    GrabModeAsync, GrabModeAsync, None, Conf.cursor[zone_x + 3 * zone_y],
 	    CurrentTime) != GrabSuccess)
 		return;
 
@@ -270,9 +277,47 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 				continue;
 			ltime = ev.xmotion.time;
 
-			cc->geom.w = ev.xmotion.x;
-			cc->geom.h = ev.xmotion.y;
+			if (zone_x == 0) {
+				/* constant: right edge (geom.x+geom.w) & offset to left edge (ptr.x) */
+				geom.x = ev.xmotion.x_root - cc->ptr.x - cc->bwidth;
+				if (geom.x < cc->geom.x + cc->geom.w) {
+					cc->geom.w = cc->geom.x + cc->geom.w - geom.x;
+					cc->geom.x = geom.x;
+				}
+			} else if (zone_x == 2) {
+				/* constant: left edge (geom.x) & offset to right edge (ptr.x-geom.w) */
+				geom.w = ev.xmotion.x_root + cc->geom.w - cc->ptr.x - cc->bwidth - cc->geom.x;
+				if (geom.w > 0) {
+					cc->ptr.x = cc->ptr.x - cc->geom.w + geom.w;
+					cc->geom.w = geom.w;
+				}
+			}
+			if (zone_y == 0) {
+				geom.y = ev.xmotion.y_root - cc->ptr.y - cc->bwidth;
+				if (geom.y < cc->geom.y + cc->geom.h) {
+					cc->geom.h = cc->geom.y + cc->geom.h - geom.y;
+					cc->geom.y = geom.y;
+				}
+			} else if (zone_y == 2) {
+				geom.h = ev.xmotion.y_root + cc->geom.h - cc->ptr.y - cc->bwidth - cc->geom.y;
+				if (geom.h > 0) {
+					cc->ptr.y = cc->ptr.y - cc->geom.h + geom.h;
+					cc->geom.h = geom.h;
+				}
+			}
+			geom = cc->geom;
 			client_apply_sizehints(cc);
+			/* size hints change only width / height, need to readjust pos and ptr */
+			if (zone_x == 0) {
+				cc->geom.x = geom.x + geom.w - cc->geom.w;
+			} else if (zone_x == 2) {
+				cc->ptr.x = cc->ptr.x - geom.w + cc->geom.w;
+			}
+			if (zone_y == 0) {
+				cc->geom.y = geom.y + geom.h - cc->geom.h;
+			} else if (zone_y == 2) {
+				cc->ptr.y = cc->ptr.y - geom.h + cc->geom.h;
+			}
 			client_resize(cc, 1);
 			screen_prop_win_draw(sc,
 			    "%4d x %-4d", cc->dim.w, cc->dim.h);
@@ -288,7 +333,7 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	XUngrabPointer(X_Dpy, CurrentTime);
 
 	/* Make sure the pointer stays within the window. */
-	client_ptr_inbound(cc, 0);
+	client_ptr_inbound(cc, 1);
 }
 
 void

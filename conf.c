@@ -52,9 +52,10 @@ static const struct {
 	{ 9, "nine" },
 };
 static int cursor_binds[] = {
+	XC_top_left_corner,    XC_top_side,    XC_top_right_corner,
+	XC_left_side,          XC_fleur,       XC_right_side,
+	XC_bottom_left_corner, XC_bottom_side, XC_bottom_right_corner,
 	XC_left_ptr,		/* CF_NORMAL */
-	XC_fleur,		/* CF_MOVE */
-	XC_bottom_right_corner,	/* CF_RESIZE */
 	XC_question_arrow,	/* CF_QUESTION */
 };
 static const char *color_binds[] = {
